@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/user3/toxic_research/JunWoo/my_model/experiments/**)",
+      "Read(//home/user3/toxic_research/JunWoo/my_model/models/**)",
+      "Read(//home/user3/toxic_research/JunWoo/my_model/utils/**)",
+      "Read(//home/user3/toxic_research/JunWoo/my_model/**)",
+      "Bash(python3 -m py_compile experiments/multimodal/smi_spec/train.py)",
+      "Bash(python3 -m py_compile experiments/multimodal/smi_spec/test.py)",
+      "Bash(python3 -m py_compile experiments/multimodal/spec_img/train.py)",
+      "Bash(python3 -m py_compile experiments/multimodal/spec_img/test.py)",
+      "Bash(python3 -m py_compile models/models.py)",
+      "Bash(python3 -m py_compile utils/dataset.py)",
+      "Bash(python3 -c \"import torch_geometric; print(torch_geometric.__version__)\")",
+      "Bash(python3 -c \"import transformers; print(transformers.__version__)\")",
+      "Bash(python3 -c \"import sklearn; print(sklearn.__version__)\")",
+      "Bash(python3 -c \"import optuna; print(optuna.__version__)\")",
+      "Bash(python3 -c \"import pandas; print(pandas.__version__)\")",
+      "Bash(python3 -c \"import rdkit; print(rdkit.__version__)\")",
+      "Bash(python3 -c \"import torchvision; print(torchvision.__version__)\")",
+      "Bash(python3 -c \"from PIL import Image; print(Image.__version__)\")",
+      "Bash(python3 -c \"import PIL; print(PIL.__version__)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
