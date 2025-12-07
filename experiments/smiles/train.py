@@ -38,8 +38,8 @@ full_ds = ConcatDataset([train_ds, valid_ds])
 start_search_time = time.time() # Record the start time for hyperparameter search
 def objective(trial):
     # Hyperparameters to tune
-    emb_dim     = trial.suggest_categorical("emb_dim", [512, 768])
-    lr    =    trial.suggest_categorical("lr", [3e-5, 4e-5])
+    emb_dim     = trial.suggest_categorical("emb_dim", [256, 512, 768])
+    lr    =    trial.suggest_categorical("lr", [2e-5, 3e-5, 4e-5])
     wd         = trial.suggest_categorical("weight_decay", [1e-5, 2e-5, 3e-5])
 
     # create the model
@@ -120,7 +120,7 @@ study = optuna.create_study(
     direction="maximize",
     sampler=optuna.samplers.TPESampler(seed=42)
 )
-study.optimize(objective, n_trials=10)
+study.optimize(objective, n_trials=25)
 
 end_search_time = time.time() # Record the end time for hyperparameter search
 print(f"Total Searching completed in {end_search_time - start_search_time:.2f} seconds")

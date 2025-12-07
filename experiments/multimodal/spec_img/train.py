@@ -27,8 +27,8 @@ from experiments.spectrum.CReSS.infer import ModelInference
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ─── 2) Load data & split ─────────────────────────────────────────────────────
-train_csv = os.path.join(ROOT, "data", "train_spectra.csv")
-valid_csv = os.path.join(ROOT, "data", "valid_spectra.csv")
+train_csv = os.path.join(ROOT, "data", "train.csv")
+valid_csv = os.path.join(ROOT, "data", "valid.csv")
 ckpt_dir = os.path.join(ROOT, "experiments", "image", "ImageMol.pth") 
 spectra_dir = os.path.join(ROOT, "data", "spectra")
 img_dir = os.path.join(ROOT, "data", "images")
@@ -52,8 +52,8 @@ test_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-sp_tr = SpectrumDataset(train_csv, labels, spectra_dir)
-sp_va = SpectrumDataset(valid_csv, labels, spectra_dir)
+sp_tr = SpectrumDataset(train_csv, labels, spectra_dir, allow_missing=True)
+sp_va = SpectrumDataset(valid_csv, labels, spectra_dir, allow_missing=True)
 i_tr = ImageDataset(train_csv, labels, img_dir, transform=train_transform)
 i_va = ImageDataset(valid_csv, labels, img_dir, transform=test_transform)
 
@@ -90,7 +90,7 @@ spectrum_encoder = SpectrumEncoder(
     model_inference,
     hidden_dim=spectrum_best_params["hidden_dim"],
     emb_dim=spectrum_best_params["emb_dim"]
-); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_only", "spectrum_encoder.pth"), map_location=torch.device('cpu')))
+); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_only", "spectrum_encoder.pth"), map_location=torch.device('cpu')), strict=False)
 
 with open(os.path.join(ROOT, "checkpoints", "parameters", "image_best_params.json")) as f:
     image_best_params = json.load(f)
@@ -103,6 +103,8 @@ image_encoder = ImageEncoder(
 for net in (spectrum_encoder, image_encoder):
     for p in net.parameters():
         p.requires_grad = False # Freeze parameters
+
+spectrum_encoder.missing_token.requires_grad = True  # Unfreeze missing token embedding for spectrum encoder
 
 # ─── 4) Optuna objective ────────────────────────────────────────────────
 start_search_time = time.time() # Record the start time for hyperparameter search
@@ -205,7 +207,7 @@ study = optuna.create_study(
     direction="maximize",
     sampler=optuna.samplers.TPESampler(seed=42)
 )
-study.optimize(objective, n_trials=10)
+study.optimize(objective, n_trials=20)
 
 end_search_time = time.time() # Record the end time for hyperparameter search
 print(f"Total Searching completed in {end_search_time - start_search_time:.2f} seconds")
@@ -231,13 +233,15 @@ train_loader = DataLoader(
 )
 
 # load encoders trained with train and valid datasets
-spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')))
+spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')), strict=False)
 image_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "image_encoder.pth"), map_location=torch.device('cpu')))
 
 # Freeze parameters of the encoders
 for net in (spectrum_encoder, image_encoder):
     for p in net.parameters():
         p.requires_grad = False
+
+spectrum_encoder.missing_token.requires_grad = True  # Unfreeze missing token embedding for spectrum encoder
 
 # load the best hyperparameters and create the model
 emb_dim = best_params["emb_dim"]

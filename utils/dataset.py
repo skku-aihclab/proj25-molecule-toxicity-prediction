@@ -227,23 +227,34 @@ class SpectrumDataset(Dataset):
         csv_path (str): Path to the CSV file containing metadata.
         label_name (List[str]): List of label column names in the CSV.
         spectra_dir (str): Directory containing the spectral .npy files.
+        allow_missing (bool): If True, allows samples without spectrum files and returns None for missing spectra.
     Returns:
-        spec: Spectral data tensor of shape (1, 4000) for CNN input.
+        spec: Spectral data tensor of shape (1, 4000) for CNN input, or None if missing and allow_missing=True.
         label
     """
     def __init__(
         self,
         csv_path: str,
         label_name: List[str],
-        spectra_dir: str
+        spectra_dir: str,
+        allow_missing: bool = False
     ):
         self.df = pd.read_csv(csv_path)
+        self.allow_missing = allow_missing
+
+        # Track which mol_ids have available spectrum files
         available = {
             os.path.splitext(f)[0]
             for f in os.listdir(spectra_dir)
             if f.endswith(".npy")
         }
-        self.df = self.df[self.df["mol_id"].astype(str).isin(available)].reset_index(drop=True) # load npy files by mol_id
+
+        if not allow_missing:
+            # Original behavior: filter to only samples with spectrum data
+            self.df = self.df[self.df["mol_id"].astype(str).isin(available)].reset_index(drop=True)
+        else:
+            # New behavior: keep all samples and track which have spectrum data
+            self.available_ids = available
 
         self.labels      = self.df[label_name].values.astype(float)
         self.spectra_dir = spectra_dir
@@ -256,9 +267,14 @@ class SpectrumDataset(Dataset):
         mol_id  = row['mol_id']
         path    = os.path.join(self.spectra_dir, f"{mol_id}.npy")
 
-        vec = np.load(path)         
-        spec = torch.from_numpy(vec)   # Convert the binary spectrum vector to torch tensor
-        spec = spec.to(torch.float32)    
+        # Check if spectrum file exists when allow_missing is True
+        if self.allow_missing and str(mol_id) not in self.available_ids:
+            # Return None for missing spectrum data
+            spec = None
+        else:
+            vec = np.load(path)
+            spec = torch.from_numpy(vec)   # Convert the binary spectrum vector to torch tensor
+            spec = spec.to(torch.float32)
 
         label = torch.from_numpy(self.labels[idx]).to(torch.float32)
 
@@ -370,7 +386,7 @@ class GraphSMILESImageDataset(Dataset):
     
 class MoltiToxDataset(Dataset):
     """
-    Dataset used in the MoltiTox framework for multi-modal molecular property prediction.
+    Dataset used in the MoltiTox model for multimodal molecular property prediction.
     Combines molecular graph, 2D structure image, 13C NMR spectra, and SMILES sequence for each compound.
     Args:
         g (GraphDataset),  s (SMILESDataset), i (ImageDataset), sp (SpectrumDataset)

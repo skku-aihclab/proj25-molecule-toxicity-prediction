@@ -1,6 +1,10 @@
-# Multi-Modal Molecular Toxicity Prediction Framework
+# MoltiTox: A Multimodal Fusion Model for Molecular Toxicity Prediction
 
-A comprehensive deep learning framework for molecular toxicity prediction using single and multi-modal approaches. The framework combines molecular graphs, SMILES sequences, 2D structure images, and NMR spectra to predict toxicity across 12 different endpoints from the Tox21 dataset.
+**Status:** Accepted in *Frontiers in Toxicology* (awaiting publication)
+
+**Citation and DOI:** Will be available upon publication
+
+A comprehensive deep learning model for molecular toxicity prediction using single and multimodal approaches. The model combines molecular graphs, SMILES sequences, 2D structure images, and NMR spectra to predict toxicity across 12 different endpoints from the Tox21 dataset.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -8,33 +12,34 @@ A comprehensive deep learning framework for molecular toxicity prediction using 
 - [Project Structure](#project-structure)
 - [Model Architecture](#model-architecture)
 - [Installation](#installation)
+- [Data Download](#data-download)
+- [Data Preprocessing](#data-preprocessing)
 - [Usage](#usage)
-- [Experiments](#experiments)
 - [Results](#results)
 - [References](#references)
 
 ## Overview
 
-This framework implements state-of-the-art molecular representation learning techniques to predict molecular toxicity. It supports:
+This model leverages pre-trained molecular encoders and multimodal fusion for toxicity prediction, achieving superior performance compared to single-modal baselines on the Tox21 benchmark.
+
+![MoltiTox Architecture](figure/MoltiTox_figure.jpg)
+
+It supports:
 - **4 Single-Modal Encoders**: Graph (GNN), SMILES (Transformer), Image (CNN), Spectrum (1D CNN)
-- **10 Multi-Modal Fusion Models**: All pairwise and higher-order combinations of the modalities
+- **8 Multimodal Fusion Models**: All pairwise and higher-order combinations of the modalities
 - **12 Toxicity Endpoints**: NR-AR, NR-AR-LBD, NR-AhR, NR-Aromatase, NR-ER, NR-ER-LBD, NR-PPAR-gamma, SR-ARE, SR-ATAD5, SR-HSE, SR-MMP, SR-p53
 
-The multi-modal models use self-attention fusion mechanisms to effectively combine complementary information from different molecular representations.
+The multimodal models use self-attention fusion mechanisms to effectively combine complementary information from different molecular representations.
 
 ## Features
 
-- ✅ **Modular Architecture**: Easily extensible encoder and fusion architectures
-- ✅ **Automated Hyperparameter Tuning**: Optuna-based TPE optimization
-- ✅ **Early Stopping**: Prevents overfitting with patience-based validation
-- ✅ **Two-Stage Training**: Train/valid split optimization → Full dataset retraining
-- ✅ **Pre-trained Backbones**:
+- **Automated Hyperparameter Tuning**: Optuna-based TPE optimization
+- **Two-Stage Training**: Train/valid split optimization → Full dataset retraining
+- **Pre-trained Backbones**:
   - MoLFormer-XL for SMILES encoding
   - ImageMol (ResNet18) for image encoding
   - CReSS for NMR spectrum encoding
-- ✅ **Transfer Learning**: Freeze pre-trained encoders and train fusion layers
-- ✅ **Multi-Task Learning**: Simultaneous prediction of 12 toxicity endpoints
-- ✅ **Reproducible**: Fixed random seeds (seed=42) for Optuna sampling
+- **Multi-Task Learning**: Simultaneous prediction of 12 toxicity endpoints
 
 ## Project Structure
 
@@ -60,7 +65,7 @@ my_model/
 │   │   ├── train.py
 │   │   ├── test.py
 │   │   └── CReSS/             # CReSS model for NMR encoding
-│   └── multimodal/            # Multi-modal fusion experiments
+│   └── multimodal/            # Multimodal fusion experiments
 │       ├── gph_smi/           # Graph + SMILES
 │       ├── gph_img/           # Graph + Image
 │       ├── gph_spec/          # Graph + Spectrum
@@ -98,29 +103,25 @@ my_model/
    - Architecture: Graph Isomorphism Network (GIN) with GINEConv layers
    - Input: Molecular graph with node features (78-dim) and edge features (4-dim)
    - Layers: Multiple GINEConv → BatchNorm → ReLU → Dropout
-   - Output: Fixed-size graph embedding
 
 2. **SMILESEncoder** (`models.models.SMILESEncoder`)
    - Architecture: Pre-trained MoLFormer-XL transformer
    - Input: Tokenized SMILES strings (max length: 202)
-   - Layers: Transformer encoder + 2-layer MLP with residual connection
-   - Output: Fixed-size SMILES embedding
+   - Layers: Transformer encoder + 2-layer MLP
 
 3. **ImageEncoder** (`models.models.ImageEncoder`)
    - Architecture: Pre-trained ResNet18 (ImageMol)
    - Input: 224×224 RGB images of 2D molecular structures
    - Layers: ResNet18 backbone + 2-layer MLP
-   - Output: Fixed-size image embedding
 
 4. **SpectrumEncoder** (`models.models.SpectrumEncoder`)
    - Architecture: Pre-trained CReSS NMR encoder
    - Input: List of PPM values from ¹³C NMR spectra
    - Layers: 1D CNN encoder + 2-layer MLP
-   - Output: Fixed-size spectrum embedding
 
-### Multi-Modal Fusion Models
+### Multimodal Fusion Models
 
-All multi-modal models follow a unified architecture:
+All multimodal models follow a unified architecture:
 1. **Projection**: Project each modality embedding to common dimension
 2. **Fusion**: Multi-head self-attention over modality tokens
 3. **Pooling**: Mean pooling across modality dimension
@@ -164,22 +165,138 @@ loss = (per_sample_loss * mask).sum() / mask.sum()
 
 ```bash
 # Clone the repository
-git clone <repository_url>
-cd my_model
+git clone https://github.com/skku-aihclab/proj25-molecule-toxicity-prediction.git
+cd proj25-molecule-toxicity-prediction
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Download pre-trained models
-# - Place ImageMol checkpoint in: checkpoints/pretrained_models/ImageMol.pth.tar
-# - CReSS model files in: experiments/spectrum/8.json and experiments/spectrum/8.pth
 ```
+
+See the [Data Download](#data-download) section below for downloading datasets and pre-trained models.
+
+## Data Download
+
+All required data files, pre-trained models, and checkpoints are available on Google Drive:
+
+**Google Drive Link:** https://drive.google.com/drive/folders/13QLMfp9T_C8tiHabWEwB1knieR9ZOZO9?usp=drive_link
+
+### Directory Structure on Google Drive
+
+```
+MoltiTox/
+├── data/
+│   ├── 1st/
+│   │   ├── train.csv
+│   │   ├── valid.csv
+│   │   ├── test.csv
+│   │   ├── train_spectra.csv
+│   │   ├── valid_spectra.csv
+│   │   └── test_spectra.csv
+│   ├── 2nd/
+│   │   └── [same structure]
+│   ├── 3rd/
+│   │   └── [same structure]
+│   ├── 4th/
+│   │   └── [same structure]
+│   └── 5th/
+│       └── [same structure]
+├── checkpoints/
+│   ├── 1st/
+│   │   ├── encoder/
+│   │   ├── model/
+│   │   └── parameters/
+│   ├── 2nd/
+│   │   └── [same structure]
+│   ├── 3rd/
+│   │   └── [same structure]
+│   ├── 4th/
+│   │   └── [same structure]
+│   └── 5th/
+│       └── [same structure]
+├── ImageMol.pth
+└── 8.pth
+```
+
+### Download Instructions
+
+1. **Download Dataset**
+   - Navigate to the `data/` folder on Google Drive
+   - Choose one of the 5 splits (1st through 5th)
+   - Download all 6 CSV files:
+     - `train.csv`, `valid.csv`, `test.csv` (full datasets)
+     - `train_spectra.csv`, `valid_spectra.csv`, `test_spectra.csv` (spectra subset only)
+   - Place the downloaded CSV files in your local `data/` directory
+
+2. **Download Pre-trained Checkpoints (Optional)**
+   - Navigate to the `checkpoints/` folder on Google Drive
+   - Choose the corresponding split (1st through 5th) that matches your data
+   - Download the entire folder structure (`encoder/`, `model/`, `parameters/`)
+   - Place the downloaded folders in your local `checkpoints/` directory
+   - The checkpoint structure must match the original:
+     ```
+     checkpoints/
+     ├── encoder/
+     │   ├── train_only/
+     │   └── train_and_valid/
+     ├── model/
+     └── parameters/
+     ```
+
+3. **Download Pre-trained Backbones**
+   - Download `ImageMol.pth` from the Google Drive root
+   - Place it in `experiments/image/ImageMol.pth`
+   - Download `8.pth` from the Google Drive root
+   - Place it in `experiments/spectrum/8.pth`
+
+### Data File Descriptions
+
+- **Standard CSV files** (`train.csv`, `valid.csv`, `test.csv`):
+  - Contains all molecules with graph, SMILES, and image modalities
+  - Used for single-modal (graph, SMILES, image) and multimodal experiments without spectra
+
+- **Spectra CSV files** (`train_spectra.csv`, `valid_spectra.csv`, `test_spectra.csv`):
+  - Contains only molecules with available NMR spectra
+  - Subset of the standard datasets
+  - Used for spectrum-based and spectrum-inclusive multimodal experiments
+
+### About the Data Splits
+
+The dataset is provided in 5 different random splits (1st through 5th) to ensure robust evaluation and reproducibility. Each split maintains the same train/valid/test distribution but with different random assignments.
+
+## Data Preprocessing
+
+The preprocessing pipeline for the Tox21 dataset is documented in `data/preprocess.ipynb`. This notebook demonstrates:
+
+1. **Molecular Structure Processing**
+   - Filtering molecules for RDKit compatibility
+   - Converting SMILES to InChIKeys for database matching
+   - Generating 224×224 PNG images from molecular structures
+
+2. **NMR Spectral Data Collection**
+   - Matching Tox21 molecules with ¹³C NMR spectra from three databases:
+     - **NMRShiftDB2**: Public NMR database
+     - **NP-MRD**: Natural Products Magnetic Resonance Database
+     - **HMDB**: Human Metabolome Database
+   - Converting spectral data to 4000-dimensional binary vectors (0.1 ppm resolution, -50 to 350 ppm range)
+   - Saving processed spectra as `.npy` files
+
+3. **Dataset Splitting**
+   - Scaffold-based splitting to ensure structural diversity across train/valid/test sets
+   - Creating spectra-specific subsets for spectrum-inclusive experiments
+
+### Running the Preprocessing Pipeline
+
+**Note:** The preprocessing notebook requires access to the original spectral databases (NMRShiftDB2, NP-MRD, HMDB). These databases are not included in this repository due to licensing and size constraints.
+
+If you wish to reproduce the preprocessing pipeline or need access to the raw spectral databases, please contact me.
+
+The pre-processed data (CSV files, images, and binary spectra) are already available and can be used directly without running the preprocessing pipeline.
 
 ## Usage
 
 ### Running All Experiments
 
-To run all experiments sequentially (single-modal + multi-modal):
+To run all experiments sequentially (single-modal + multimodal):
 
 ```bash
 python -u main.py 2>&1 | tee result.txt
@@ -187,7 +304,7 @@ python -u main.py 2>&1 | tee result.txt
 
 This will:
 1. Train and test all 4 single-modal models
-2. Train and test all 10 multi-modal models
+2. Train and test all 8 multimodal models
 3. Save all results to `result.txt`
 4. Save model checkpoints to `checkpoints/`
 5. Save best hyperparameters to `checkpoints/parameters/`
@@ -206,7 +323,7 @@ cd ../smiles
 python train.py  # Train SMILES model
 python test.py   # Test SMILES model
 
-# Multi-modal examples
+# Multimodal examples
 cd ../multimodal/gph_smi
 python train.py  # Train Graph+SMILES fusion model
 python test.py   # Test Graph+SMILES fusion model
@@ -220,18 +337,11 @@ python test.py   # Test SMILES+Image fusion model
 
 Each training script follows this pipeline:
 
-1. **Load Data**: Load train/valid splits and create datasets
-2. **Load Encoders**: Load pre-trained encoders (for multi-modal) and freeze weights
-3. **Hyperparameter Search**:
-   - Optuna TPE sampler with 10-20 trials
-   - Search space: embedding dim, hidden dim, learning rate, weight decay, dropout
-   - Early stopping with patience (5-10 epochs)
-   - Maximize validation AUC
-4. **Save Best Parameters**: Save best hyperparameters to JSON
-5. **Retrain on Full Data**:
-   - Load train+valid encoders
-   - Retrain with best hyperparameters for N epochs (from step 3)
-   - Save final model checkpoint
+1. **Load Data**
+2. **Load Encoders**
+3. **Hyperparameter Search**
+4. **Save Best Parameters**
+5. **Retrain on Full Data**
 
 ### Testing Pipeline
 
@@ -242,41 +352,11 @@ Each testing script:
 4. Evaluates on test set
 5. Reports per-task AUC and mean AUC
 
-## Experiments
 
-### Hyperparameter Search Spaces
-
-**Single-Modal Models:**
-```python
-hidden_dim: [256, 512]
-num_layers: [3, 4]
-emb_dim: [256, 512]
-lr: [1e-4, 3e-4, 1e-3]
-weight_decay: [1e-5, 1e-4, 1e-3]
-```
-
-**Multi-Modal Models:**
-```python
-emb_dim: [128, 256]
-hidden_dim: [512, 768]
-num_layers: [1]
-lr: [1e-4, 3e-4]
-weight_decay: [1e-5, 1e-4]
-dropout: [0.3, 0.4, 0.5]
-```
-
-### Training Configuration
-
-- **Optimizer**: AdamW
-- **Batch Size**: 32 (train), 64 (valid/test)
-- **Max Epochs**: 30-50 (depending on model)
-- **Early Stopping Patience**: 5-10 epochs
-- **Metric**: ROC-AUC (averaged across tasks)
-- **Device**: CUDA if available, otherwise CPU
 
 ## Results
 
-The framework generates results for 12 Tox21 toxicity endpoints:
+The model generates results for 12 Tox21 toxicity endpoints:
 
 | Endpoint | Description |
 |----------|-------------|
@@ -295,18 +375,7 @@ The framework generates results for 12 Tox21 toxicity endpoints:
 
 Results are reported as ROC-AUC scores for each endpoint and mean AUC across all endpoints.
 
-### Output Format
 
-Test results are printed in this format:
-```
-Total testing time: X.XX seconds
-NR-AR          : 0.XXXX
-NR-AR-LBD      : 0.XXXX
-...
-SR-p53         : 0.XXXX
-------------------------------
-Mean AUC       : 0.XXXX
-```
 
 ## File Descriptions
 
@@ -315,11 +384,11 @@ Mean AUC       : 0.XXXX
 - **`models/models.py`**: Contains all encoder and classifier implementations
   - Single-modal: GraphEncoder, SMILESEncoder, ImageEncoder, SpectrumEncoder
   - Classifiers: GraphClassifier, SMILESClassifier, ImageClassifier, SpectrumClassifier
-  - Multi-modal: All fusion model classes
+  - Multimodal: All fusion model classes
 
 - **`utils/dataset.py`**: Dataset classes for loading and preprocessing
   - Single-modal: GraphDataset, SMILESDataset, ImageDataset, SpectrumDataset
-  - Multi-modal: GraphSMILESDataset, GraphImageDataset, etc.
+  - Multimodal: GraphSMILESDataset, GraphImageDataset, etc.
 
 ### Checkpoints
 
@@ -333,55 +402,43 @@ Models and parameters are saved to:
 
 1. **Two-Stage Training**: First optimize hyperparameters on train/valid split, then retrain on full train+valid with best hyperparameters for final test evaluation.
 
-2. **Frozen Encoders**: For multi-modal models, pre-trained single-modal encoders are frozen to prevent overfitting and reduce training time.
+2. **Frozen Encoders**: For multimodal models, pre-trained single-modal encoders are frozen to prevent overfitting and reduce training time.
 
 3. **Self-Attention Fusion**: Multi-head attention allows the model to learn adaptive weights for each modality based on the input.
-
-4. **Masked Loss**: Handles missing labels in the Tox21 dataset without introducing bias.
-
-5. **Data Augmentation**: Image data uses standard augmentations (flip, rotation, grayscale) during training.
 
 ## References
 
 ### Pre-trained Models
 
-1. **MoLFormer-XL**: Ross, J., et al. (2022). "Large-Scale Chemical Language Representations Capture Molecular Structure and Properties." *Nature Machine Intelligence*.
+-  **MoLFormer-XL**: Ross, J., et al. (2022). "Large-Scale Chemical Language Representations Capture Molecular Structure and Properties." *Nature Machine Intelligence*.
 
-2. **ImageMol**: Zhu, J., et al. (2022). "Accurate Prediction of Molecular Properties and Drug Targets Using a Self-Supervised Image Representation Learning Framework." *Nature Machine Intelligence*.
+-  **ImageMol**: Zhu, J., et al. (2022). "Accurate Prediction of Molecular Properties and Drug Targets Using a Self-Supervised Image Representation Learning Framework." *Nature Machine Intelligence*.
 
-3. **CReSS**: Kwon, Y., et al. (2021). "Cross-Modal Retrieval between ¹³C NMR Spectra and Structures for Compound Identification Using Deep Contrastive Learning." *Journal of Chemical Information and Modeling*.
-
-### Architectures
-
-4. **GIN**: Xu, K., et al. (2019). "How Powerful are Graph Neural Networks?" *ICLR*.
+-  **CReSS**: Kwon, Y., et al. (2021). "Cross-Modal Retrieval between ¹³C NMR Spectra and Structures for Compound Identification Using Deep Contrastive Learning." *Journal of Chemical Information and Modeling*.
 
 ### Dataset
-
-5. **Tox21**: Huang, R., et al. (2016). "Tox21Challenge to Build Predictive Models of Nuclear Receptor and Stress Response Pathways as Mediated by Exposure to Environmental Chemicals and Drugs." *Frontiers in Environmental Science*.
+- **Moleculenet**: Wu, Z., et al. (2018). "MoleculeNet: A Benchmark for Molecular Machine Learning." *Chemical Science*.
 
 ## Citation
 
-If you use this framework in your research, please cite:
+If you use this model in your research, please cite:
 
-```bibtex
-@software{multimodal_tox_framework,
-  title={Multi-Modal Molecular Toxicity Prediction Framework},
-  author={JunWoo},
-  year={2025},
-  url={https://github.com/...}
-}
+```
+MoltiTox: A Multimodal Fusion Model for Molecular Toxicity Prediction
+Frontiers in Toxicology (Accepted, awaiting publication)
+
+DOI and full citation will be available upon publication.
 ```
 
 ## License
 
-[Add your license here]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
 For questions or issues, please contact:
-- Email: [your email]
-- GitHub Issues: [repository issues page]
+- Email: jw0528@g.skku.edu
 
 ---
 
-**Last Updated**: October 2025
+**Last Updated**: December 2025

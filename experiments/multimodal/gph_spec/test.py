@@ -35,14 +35,14 @@ from experiments.spectrum.CReSS.infer import ModelInference
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ─── 2) Load data & split ─────────────────────────────────────────────────────
-test_csv = os.path.join(ROOT, "data", "test_spectra.csv")
+test_csv = os.path.join(ROOT, "data", "test.csv")
 spectra_dir = os.path.join(ROOT, "data", "spectra")
 labels = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase",
           "NR-ER","NR-ER-LBD","NR-PPAR-gamma",
           "SR-ARE","SR-ATAD5","SR-HSE","SR-MMP","SR-p53"]
 
 g_test = GraphDataset(test_csv, labels)
-sp_test = SpectrumDataset(test_csv, labels, spectra_dir)
+sp_test = SpectrumDataset(test_csv, labels, spectra_dir, allow_missing=True)
     
 def collate(batch):
     """
@@ -87,10 +87,10 @@ model_inference = ModelInference(
 with open(os.path.join(ROOT, "checkpoints", "parameters", "spectrum_best_params.json")) as f:
     spectrum_best_params = json.load(f)
 spectrum_encoder = SpectrumEncoder(
-    model_inference, 
+    model_inference,
     hidden_dim=spectrum_best_params["hidden_dim"],
     emb_dim=spectrum_best_params["emb_dim"],
-); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')))
+); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')), strict=False)
 
 # Freeze parameters of the encoders
 for net in (graph_encoder, spectrum_encoder):

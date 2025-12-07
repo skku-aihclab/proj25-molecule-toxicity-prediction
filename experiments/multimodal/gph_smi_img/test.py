@@ -31,7 +31,7 @@ from utils.attention_analysis import (
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ─── 2) Load data & split ─────────────────────────────────────────────────────
-test_csv = os.path.join(ROOT, "data", "test_spectra.csv")
+test_csv = os.path.join(ROOT, "data", "test.csv")
 ckpt_dir = os.path.join(ROOT, "experiments", "image", "ImageMol.pth") 
 img_dir= os.path.join(ROOT, "data", "images")
 labels = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase",

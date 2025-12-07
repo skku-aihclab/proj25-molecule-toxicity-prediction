@@ -200,7 +200,7 @@ study = optuna.create_study(
     direction="maximize",
     sampler=optuna.samplers.TPESampler(seed=42)
 )
-study.optimize(objective, n_trials=10)
+study.optimize(objective, n_trials=20)
 
 end_search_time = time.time() # Record the end time for hyperparameter search
 print(f"Total Searching completed in {end_search_time - start_search_time:.2f} seconds")
