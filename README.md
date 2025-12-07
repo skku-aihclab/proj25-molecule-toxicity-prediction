@@ -220,6 +220,9 @@ MoltiTox/
 ### Download Instructions
 
 1. **Download Dataset**
+   Images and spectra are included in this repository.
+   
+   However, if you want to use the same data splits as reported in the paper, download the CSV files from Google Drive:
    - Navigate to the `data/` folder on Google Drive
    - Choose one of the 5 splits (1st through 5th)
    - Download all 6 CSV files:
