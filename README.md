@@ -1,4 +1,4 @@
-# MoltiTox: A Multimodal Fusion Model for Molecular Toxicity Prediction
+# MoltiTox: a multimodal fusion model for molecular toxicity prediction
 
 **Status:** Accepted in *Frontiers in Toxicology* (awaiting publication)
 
