@@ -4,7 +4,7 @@
 
 **Citation and DOI:** Will be available upon publication
 
-A comprehensive deep learning model for molecular toxicity prediction using single and multimodal approaches. The model combines molecular graphs, SMILES sequences, 2D structure images, and NMR spectra to predict toxicity across 12 different endpoints from the Tox21 dataset.
+A comprehensive deep learning model for molecular toxicity prediction using multimodal approaches. The model combines molecular graphs, SMILES sequences, 2D structure images, and NMR spectra to predict toxicity across 12 different endpoints from the Tox21 dataset.
 
 ## Table of Contents
 - [Overview](#overview)
