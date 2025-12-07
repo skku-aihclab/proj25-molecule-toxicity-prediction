@@ -251,6 +251,7 @@ class SpectrumEncoder(nn.Module):
     SpectrumEncoder using pre-trained CReSS NMR encoder to process spectral data
     This module takes a list of ppm values as input and outputs embeddings of a specified dimension.
     It includes a 2-layer MLP head for further processing.
+    Now supports handling missing spectrum data with a learned missing token embedding.
     Reference: "Cross-Modal Retrieval between 13C NMR Spectra and Structures for Compound Identification Using Deep Contrastive Learning"
     Args:
         model_inference: CReSS NMR encoder instance
@@ -260,16 +261,25 @@ class SpectrumEncoder(nn.Module):
     """
 
     def __init__(
-        self, 
-        model_inference, 
-        hidden_dim: int = 512, 
+        self,
+        model_inference,
+        hidden_dim: int = 512,
         emb_dim: int = 256,
         dropout: float = 0.5
     ):
 
         super().__init__()
         self.model_inf = model_inference
-        
+
+        # Freeze the CReSS NMR model for training
+        for p in self.model_inf.clip_model.parameters():
+            p.requires_grad = False 
+
+        # Learned embedding for missing spectrum data
+        # Initialize with zeros to represent "no information" state
+        # Alows the model to learn a representation when spectrum is unavailable
+        self.missing_token = nn.Parameter(torch.zeros(1, emb_dim))
+
         # define 2-layer MLP head
         self.fc1 = nn.Linear(768, hidden_dim)
         self.relu1 = nn.ReLU(inplace=True)
@@ -283,18 +293,26 @@ class SpectrumEncoder(nn.Module):
         embeddings = []
         # create embeddings for each ppm list
         for ppm in ppm_lists:
-            emb = self.model_inf.nmr_encode(ppm)
-            embeddings.append(emb)
+            if ppm is None:
+                # Use learned missing token for samples without spectrum data
+                emb_processed = self.missing_token
+            else:
+                # Process normal spectrum data through CReSS encoder
+                emb = self.model_inf.nmr_encode(ppm)
+                # Apply MLP to transform to desired dimension
+                h = self.fc1(emb)
+                h = self.relu1(h)
+                h = self.dropout(h)
+                h = self.fc2(h)
+                h = self.relu2(h)
+                emb_processed = self.dropout(h)
 
+            embeddings.append(emb_processed)
+
+        # Stack all embeddings (batch_size, emb_dim)
         batch_emb = torch.cat(embeddings, dim=0)
-        h = self.fc1(batch_emb)
-        h = self.relu1(h)
-        h = self.dropout(h)
-        h = self.fc2(h) 
-        h = self.relu2(h)
-        h = self.dropout(h)
 
-        return h
+        return batch_emb
 
 class SpectrumClassifier(nn.Module):
     """
@@ -314,7 +332,7 @@ class SpectrumClassifier(nn.Module):
     
 class MultiModalGphSMI(nn.Module):
     """
-    MultiModalGphSMI: combines Graph and SMILES branches for multi-modal learning.
+    MultiModalGphSMI: combines Graph and SMILES branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -392,7 +410,7 @@ class MultiModalGphSMI(nn.Module):
     
 class MultiModalGphImg(nn.Module):
     """
-    MultiModalGphImg combines Graph and Image branches for multi-modal learning.
+    MultiModalGphImg combines Graph and Image branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -467,7 +485,7 @@ class MultiModalGphImg(nn.Module):
     
 class MultiModalGphSpec(nn.Module):
     """
-    MultiModalGphSpec: combines Graph and Spectrum branches for multi-modal learning.
+    MultiModalGphSpec: combines Graph and Spectrum branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -542,7 +560,7 @@ class MultiModalGphSpec(nn.Module):
     
 class MultiModalGphSMIImg(nn.Module):
     """
-    MultiModalGphSMIImg combines Graph, SMILES, Image branches for multi-modal learning.
+    MultiModalGphSMIImg combines Graph, SMILES, Image branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -623,7 +641,7 @@ class MultiModalGphSMIImg(nn.Module):
     
 class MultiModalSMIImg(nn.Module):
     """
-    MultiModalSMIImg combines SMILES and Image branches for multi-modal learning.
+    MultiModalSMIImg combines SMILES and Image branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -698,7 +716,7 @@ class MultiModalSMIImg(nn.Module):
 
 class MultiModalSMISpec(nn.Module):
     """
-    MultiModalSMISpec combines SMILES and Spectrum branches for multi-modal learning.
+    MultiModalSMISpec combines SMILES and Spectrum branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -773,7 +791,7 @@ class MultiModalSMISpec(nn.Module):
 
 class MultiModalSpecImg(nn.Module):
     """
-    MultiModalSpecImg combines Spectrum and Image branches for multi-modal learning.
+    MultiModalSpecImg combines Spectrum and Image branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:
@@ -848,7 +866,7 @@ class MultiModalSpecImg(nn.Module):
 
 class MoltiTox(nn.Module):
     """
-    MoltiTox combines Graph, Image, SMILES, and Spectrum branches for multi-modal learning.
+    MoltiTox combines Graph, Image, SMILES, and Spectrum branches for multimodal learning.
     It projects the outputs of each branch to a common embedding dimension and fuses them using self-attention.
     The fused representation is then passed through a classification head to produce multi-task logits.
     Args:

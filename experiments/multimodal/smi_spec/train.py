@@ -26,8 +26,8 @@ from experiments.spectrum.CReSS.infer import ModelInference
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ─── 2) Load data & split ─────────────────────────────────────────────────────
-train_csv = os.path.join(ROOT, "data", "train_spectra.csv")
-valid_csv = os.path.join(ROOT, "data", "valid_spectra.csv")
+train_csv = os.path.join(ROOT, "data", "train.csv")
+valid_csv = os.path.join(ROOT, "data", "valid.csv")
 spectra_dir = os.path.join(ROOT, "data", "spectra")
 labels = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase",
           "NR-ER","NR-ER-LBD","NR-PPAR-gamma",
@@ -45,8 +45,8 @@ s_va = SMILESDataset(
     pretrained_model_name="ibm-research/MoLFormer-XL-both-10pct",
     max_length=202
 )
-sp_tr = SpectrumDataset(train_csv, labels, spectra_dir)
-sp_va = SpectrumDataset(valid_csv, labels, spectra_dir)
+sp_tr = SpectrumDataset(train_csv, labels, spectra_dir, allow_missing=True)
+sp_va = SpectrumDataset(valid_csv, labels, spectra_dir, allow_missing=True)
 
 s_full = ConcatDataset([s_tr, s_va])
 sp_full = ConcatDataset([sp_tr, sp_va])
@@ -90,11 +90,13 @@ spectrum_encoder = SpectrumEncoder(
     model_inference,
     hidden_dim=spectrum_best_params["hidden_dim"],
     emb_dim=spectrum_best_params["emb_dim"]
-); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_only", "spectrum_encoder.pth"), map_location=torch.device('cpu')))
+); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_only", "spectrum_encoder.pth"), map_location=torch.device('cpu')), strict=False)
 
 for net in (smiles_encoder, spectrum_encoder):
     for p in net.parameters():
         p.requires_grad = False # Freeze parameters
+
+spectrum_encoder.missing_token.requires_grad = True  # Unfreeze missing token embedding for spectrum encoder
 
 # ─── 4) Optuna objective ────────────────────────────────────────────────
 start_search_time = time.time() # Record the start time for hyperparameter search
@@ -197,7 +199,7 @@ study = optuna.create_study(
     direction="maximize",
     sampler=optuna.samplers.TPESampler(seed=42)
 )
-study.optimize(objective, n_trials=10)
+study.optimize(objective, n_trials=20)
 
 end_search_time = time.time() # Record the end time for hyperparameter search
 print(f"Total Searching completed in {end_search_time - start_search_time:.2f} seconds")
@@ -224,12 +226,14 @@ train_loader = DataLoader(
 
 # load encoders trained with train and valid datasets
 smiles_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "smiles_encoder.pth"), map_location=torch.device('cpu')))
-spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')))
+spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')), strict=False)
 
 # Freeze parameters of the encoders
 for net in (smiles_encoder, spectrum_encoder):
     for p in net.parameters():
         p.requires_grad = False
+
+spectrum_encoder.missing_token.requires_grad = True  # Unfreeze missing token embedding for spectrum encoder
 
 # load the best hyperparameters and create the model
 emb_dim = best_params["emb_dim"]

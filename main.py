@@ -7,32 +7,32 @@ if __name__ == "__main__":
     SCRIPTS = [  
         # "experiments/multimodal/gph_smi_img/test.py",
         # --------- Graph ----------
-        # "experiments/graph/train.py",
-        # "experiments/graph/test.py",
+        "experiments/graph/train.py",
+        "experiments/graph/test.py",
 
         # --------- SMILES ----------
-        # "experiments/smiles/train.py",
-        # "experiments/smiles/test.py",
+        "experiments/smiles/train.py",
+        "experiments/smiles/test.py",
 
         # --------- Image ----------
-        # "experiments/image/train.py",
-        # "experiments/image/test.py",
+        "experiments/image/train.py",
+        "experiments/image/test.py",
 
         # --------- Spectrum ----------
-        # "experiments/spectrum/train.py",
-        # "experiments/spectrum/test.py",
+        "experiments/spectrum/train.py",
+        "experiments/spectrum/test.py",
 
         # --------- Graph + SMILES ----------
-        # "experiments/multimodal/gph_smi/train.py",
-        # "experiments/multimodal/gph_smi/test.py",
+        "experiments/multimodal/gph_smi/train.py",
+        "experiments/multimodal/gph_smi/test.py",
 
         # --------- Graph + Image ----------
-        # "experiments/multimodal/gph_img/train.py",
-        # "experiments/multimodal/gph_img/test.py",
+        "experiments/multimodal/gph_img/train.py",
+        "experiments/multimodal/gph_img/test.py",
 
         # --------- Graph + Spectrum ----------
-        # "experiments/multimodal/gph_spec/train.py",
-        # "experiments/multimodal/gph_spec/test.py",
+        "experiments/multimodal/gph_spec/train.py",
+        "experiments/multimodal/gph_spec/test.py",
         
         # --------- SMILES + Image ----------
         "experiments/multimodal/smi_img/train.py",
@@ -41,18 +41,18 @@ if __name__ == "__main__":
         # --------- SMILES + Spectrum ----------
         "experiments/multimodal/smi_spec/train.py",
         "experiments/multimodal/smi_spec/test.py",
-        
+
         # --------- Image + Spectrum ----------
         "experiments/multimodal/spec_img/train.py",
         "experiments/multimodal/spec_img/test.py",
 
-        # --------- Graph + SMILES + Image (3-MoltiTox) ----------
-        # "experiments/multimodal/gph_smi_img/train.py",
-        # "experiments/multimodal/gph_smi_img/test.py",
+        # --------- Graph + SMILES + Image (MoltiTox-3) ----------
+        "experiments/multimodal/gph_smi_img/train.py",
+        "experiments/multimodal/gph_smi_img/test.py",
         
-        # --------- Graph + SMILES + Image + Spectrum (4-MoltiTox) ----------
-        # "experiments/multimodal/moltitox/train.py",
-        # "experiments/multimodal/moltitox/test.py",
+        # --------- Graph + SMILES + Image + Spectrum (MoltiTox) ----------
+        "experiments/multimodal/moltitox/train_fast.py",
+        "experiments/multimodal/moltitox/test.py",
     ]
 
     for script in SCRIPTS:

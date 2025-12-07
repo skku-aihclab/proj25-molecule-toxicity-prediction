@@ -51,9 +51,9 @@ start_search_time = time.time() # Record the start time for hyperparameter searc
 def objective(trial):
     # Hyperparameters to tune
     hidden_dim  = trial.suggest_categorical("hidden_dim", [256, 512])
-    emb_dim    = trial.suggest_categorical("emb_dim", [128, 256])
-    lr        =    trial.suggest_categorical("lr", [1e-4, 1e-3])
-    wd         = trial.suggest_categorical("weight_decay", [1e-4, 1e-3])
+    emb_dim    = trial.suggest_categorical("emb_dim", [128, 256, 512])
+    lr        =    trial.suggest_categorical("lr", [1e-4, 1e-3, 5e-3])
+    wd         = trial.suggest_categorical("weight_decay", [1e-5, 1e-4, 1e-3])
 
     # create the model
     encoder = SpectrumEncoder(
@@ -131,7 +131,7 @@ study = optuna.create_study(
     direction="maximize",
     sampler=optuna.samplers.TPESampler(seed=42)
 )
-study.optimize(objective, n_trials=15)
+study.optimize(objective, n_trials=50)
 
 end_search_time = time.time() # Record the end time for hyperparameter search
 print(f"Total Searching completed in {end_search_time - start_search_time:.2f} seconds")

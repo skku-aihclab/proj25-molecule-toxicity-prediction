@@ -36,7 +36,7 @@ from experiments.spectrum.CReSS.infer import ModelInference
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ─── 2) Load data & split ─────────────────────────────────────────────────────
-test_csv = os.path.join(ROOT, "data", "test_spectra.csv")
+test_csv = os.path.join(ROOT, "data", "test.csv")
 ckpt_dir = os.path.join(ROOT, "experiments", "image", "ImageMol.pth")
 img_dir = os.path.join(ROOT, "data", "images")
 spectra_dir = os.path.join(ROOT, "data", "spectra")
@@ -59,11 +59,17 @@ s_test = SMILESDataset(
     max_length=202
 )
 i_test = ImageDataset(test_csv, labels, img_dir, transform=test_transform)
-sp_test = SpectrumDataset(test_csv, labels, spectra_dir)
+# MODIFIED: Enable allow_missing=True to handle samples without spectrum data
+sp_test = SpectrumDataset(test_csv, labels, spectra_dir, allow_missing=True)
+
+print(f"Total test samples: {len(g_test)}")
+print(f"Samples with spectrum data: {len([mid for mid in sp_test.df['mol_id'].astype(str) if mid in sp_test.available_ids])}")
+print(f"Samples without spectrum data: {len([mid for mid in sp_test.df['mol_id'].astype(str) if mid not in sp_test.available_ids])}")
 
 def collate(batch):
     """
     Custom collate function to handle batching of graph, smiles, image, and spectrum data.
+    Now handles None values for missing spectrum data.
     Args:
         batch: List of tuples (graph, transformer IDs, transformer mask, image, spectra, labels).
     Returns:
@@ -74,7 +80,7 @@ def collate(batch):
     t_ids = torch.stack(ids)
     t_mask = torch.stack(mask)
     img_batch = torch.stack(img)
-    ppm_batch = list(ppm_list)
+    ppm_batch = list(ppm_list)  # Can contain None for missing spectrum
     y_batch = torch.stack(y)
     return g_batch, t_ids, t_mask, img_batch, ppm_batch, y_batch
 
@@ -123,14 +129,25 @@ model_inference = ModelInference(
 with open(os.path.join(ROOT, "checkpoints", "parameters", "spectrum_best_params.json")) as f:
     spectrum_best_params = json.load(f)
 spectrum_encoder = SpectrumEncoder(
-    model_inference, 
+    model_inference,
     hidden_dim=spectrum_best_params["hidden_dim"],
     emb_dim=spectrum_best_params["emb_dim"],
-); spectrum_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"), map_location=torch.device('cpu')))
+)
+# MODIFIED: Load checkpoint with strict=False to allow for new missing_token parameter
+spectrum_encoder.load_state_dict(
+    torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"),
+               map_location=torch.device('cpu')),
+    strict=False
+)
 
-# Freeze parameters of the backbone models
-for net in (graph_encoder, image_encoder, smiles_encoder, spectrum_encoder):
+# Freeze parameters of the backbone models (but allow missing_token to be trainable if needed)
+for net in (graph_encoder, image_encoder, smiles_encoder):
     for p in net.parameters():
+        p.requires_grad = False
+
+# Freeze spectrum encoder except missing_token
+for name, p in spectrum_encoder.named_parameters():
+    if 'missing_token' not in name:
         p.requires_grad = False
 
 # ─── 4) hyperparameters ──────────────────────────────────────
@@ -155,10 +172,13 @@ model = MoltiTox(
     num_tasks=len(labels),
     dropout=dropout
 ).to(device)
-model.load_state_dict(torch.load(
-    os.path.join(ROOT, "checkpoints", "model", "moltitox.pth"), map_location=device))
+model.load_state_dict(
+    torch.load(os.path.join(ROOT, "checkpoints", "model", "moltitox.pth"), map_location=device),
+    strict=False  # Allow missing_token parameter to be uninitialized
+)
 
 # ─── 6) Test model ─────────────────────────────────────
+print("\nStarting evaluation on full test set with missing spectrum handling...")
 start_test_time = time.time()  # Record the start time for test performance
 model.eval()
 
@@ -169,6 +189,7 @@ with torch.no_grad():
         t_ids = t_ids.to(device)
         t_mask = t_mask.to(device)
         img = img.to(device)
+        # ppm list can contain None for missing spectrum data
         logits, attn_weights = model(g, t_ids, t_mask, img, ppm, return_attention=True)
 
         probs = torch.sigmoid(logits)
@@ -192,10 +213,14 @@ end_test_time = time.time()  # Record the end time for test performance
 print(f"Total testing time: {end_test_time - start_test_time:.2f} seconds")
 
 # Print AUC results
+print("\n" + "="*50)
+print("RESULTS ON FULL TEST SET WITH MISSING DATA HANDLING")
+print("="*50)
 for lab, auc in aucs.items():
     print(f"{lab:15s}: {auc:.4f}")
-print("-" * 30)
+print("-" * 50)
 print(f"Mean AUC        : {np.nanmean(list(aucs.values())):.4f}")
+print("="*50)
 
 # ─── 7) Attention weight analysis ─────────────────────────────────────
 modality_names = ['Graph', 'SMILES', 'Image', 'Spectrum']
@@ -234,7 +259,7 @@ plot_cross_modal_attention_heatmap(
     modality_names=modality_names,
     save_dir=attention_save_dir,
     model_name="moltitox",
-    title='MoltiTox Cross-Modal Attention',
+    title='MoltiTox Cross-Modal Attention (Full Test with Missing Data)',
     figsize=(10, 8)
 )
 
@@ -244,5 +269,7 @@ save_cross_modal_attention_analysis(
     std_matrix=std_matrix,
     modality_names=modality_names,
     save_dir=attention_save_dir,
-    model_name="moltitox"
+    model_name="moltitox_full_missing"
 )
+
+print("\nEvaluation complete! Results saved to:", attention_save_dir)
