@@ -10,7 +10,6 @@ A comprehensive deep learning model for molecular toxicity prediction using a mu
 - [Overview](#overview)
 - [Features](#features)
 - [Project Structure](#project-structure)
-- [Model Architecture](#model-architecture)
 - [Installation](#installation)
 - [Data Download](#data-download)
 - [Data Preprocessing](#data-preprocessing)
@@ -95,57 +94,6 @@ my_model/
 └── README.md                  # This file
 ```
 
-## Model Architecture
-
-### Single-Modal Encoders
-
-1. **GraphEncoder** (`models.models.GraphEncoder`)
-   - Architecture: Graph Isomorphism Network (GIN) with GINEConv layers
-   - Input: Molecular graph with node features (78-dim) and edge features (4-dim)
-   - Layers: Multiple GINEConv → BatchNorm → ReLU → Dropout
-
-2. **SMILESEncoder** (`models.models.SMILESEncoder`)
-   - Architecture: Pre-trained MoLFormer-XL transformer
-   - Input: Tokenized SMILES strings (max length: 202)
-   - Layers: Transformer encoder + 2-layer MLP
-
-3. **ImageEncoder** (`models.models.ImageEncoder`)
-   - Architecture: Pre-trained ResNet18 (ImageMol)
-   - Input: 224×224 RGB images of 2D molecular structures
-   - Layers: ResNet18 backbone + 2-layer MLP
-
-4. **SpectrumEncoder** (`models.models.SpectrumEncoder`)
-   - Architecture: Pre-trained CReSS NMR encoder
-   - Input: List of PPM values from ¹³C NMR spectra
-   - Layers: 1D CNN encoder + 2-layer MLP
-
-### Multimodal Fusion Models
-
-All multimodal models follow a unified architecture:
-1. **Projection**: Project each modality embedding to common dimension
-2. **Fusion**: Multi-head self-attention over modality tokens
-3. **Pooling**: Mean pooling across modality dimension
-4. **Classification**: MLP head for multi-task prediction
-
-Available fusion models:
-- `MultiModalGphSMI`: Graph + SMILES
-- `MultiModalGphImg`: Graph + Image
-- `MultiModalGphSpec`: Graph + Spectrum
-- `MultiModalSMIImg`: SMILES + Image
-- `MultiModalSMISpec`: SMILES + Spectrum
-- `MultiModalSpecImg`: Spectrum + Image
-- `MultiModalGphSMIImg`: Graph + SMILES + Image
-- `MoltiTox`: Graph + SMILES + Image + Spectrum (Full)
-
-### Loss Function
-
-Binary cross-entropy with logits, masked for missing labels:
-```python
-mask = (labels >= 0).float()
-targets = labels.clamp(min=0)
-per_sample_loss = F.binary_cross_entropy_with_logits(logits, targets, reduction="none")
-loss = (per_sample_loss * mask).sum() / mask.sum()
-```
 
 ## Installation
 
@@ -262,32 +210,9 @@ MoltiTox/
   - Subset of the standard datasets
   - Used for spectrum-based and spectrum-inclusive multimodal experiments
 
-### About the Data Splits
-
-The dataset is provided in 5 different random splits (1st through 5th) to ensure robust evaluation and reproducibility. Each split maintains the same train/valid/test distribution but with different random assignments.
-
 ## Data Preprocessing
 
-The preprocessing pipeline for the Tox21 dataset is documented in `data/preprocess.ipynb`. This notebook demonstrates:
-
-1. **Molecular Structure Processing**
-   - Filtering molecules for RDKit compatibility
-   - Converting SMILES to InChIKeys for database matching
-   - Generating 224×224 PNG images from molecular structures
-
-2. **NMR Spectral Data Collection**
-   - Matching Tox21 molecules with ¹³C NMR spectra from three databases:
-     - **NMRShiftDB2**: Public NMR database
-     - **NP-MRD**: Natural Products Magnetic Resonance Database
-     - **HMDB**: Human Metabolome Database
-   - Converting spectral data to 4000-dimensional binary vectors (0.1 ppm resolution, -50 to 350 ppm range)
-   - Saving processed spectra as `.npy` files
-
-3. **Dataset Splitting**
-   - Scaffold-based splitting to ensure structural diversity across train/valid/test sets
-   - Creating spectra-specific subsets for spectrum-inclusive experiments
-
-### Running the Preprocessing Pipeline
+The preprocessing pipeline for the Tox21 dataset is documented in `data/preprocess.ipynb`.
 
 **Note:** The preprocessing notebook requires access to the original spectral databases (NMRShiftDB2, NP-MRD, HMDB). These databases are not included in this repository due to licensing and size constraints.
 
@@ -354,60 +279,6 @@ Each testing script:
 3. Loads trained model checkpoint
 4. Evaluates on test set
 5. Reports per-task AUC and mean AUC
-
-
-
-## Results
-
-The model generates results for 12 Tox21 toxicity endpoints:
-
-| Endpoint | Description |
-|----------|-------------|
-| NR-AR | Nuclear Receptor - Androgen Receptor |
-| NR-AR-LBD | NR-AR Ligand Binding Domain |
-| NR-AhR | Nuclear Receptor - Aryl Hydrocarbon Receptor |
-| NR-Aromatase | Nuclear Receptor - Aromatase |
-| NR-ER | Nuclear Receptor - Estrogen Receptor |
-| NR-ER-LBD | NR-ER Ligand Binding Domain |
-| NR-PPAR-gamma | NR - Peroxisome Proliferator-Activated Receptor Gamma |
-| SR-ARE | Stress Response - Antioxidant Response Element |
-| SR-ATAD5 | Stress Response - ATAD5 |
-| SR-HSE | Stress Response - Heat Shock Element |
-| SR-MMP | Stress Response - Mitochondrial Membrane Potential |
-| SR-p53 | Stress Response - p53 |
-
-Results are reported as ROC-AUC scores for each endpoint and mean AUC across all endpoints.
-
-
-
-## File Descriptions
-
-### Core Model Files
-
-- **`models/models.py`**: Contains all encoder and classifier implementations
-  - Single-modal: GraphEncoder, SMILESEncoder, ImageEncoder, SpectrumEncoder
-  - Classifiers: GraphClassifier, SMILESClassifier, ImageClassifier, SpectrumClassifier
-  - Multimodal: All fusion model classes
-
-- **`utils/dataset.py`**: Dataset classes for loading and preprocessing
-  - Single-modal: GraphDataset, SMILESDataset, ImageDataset, SpectrumDataset
-  - Multimodal: GraphSMILESDataset, GraphImageDataset, etc.
-
-### Checkpoints
-
-Models and parameters are saved to:
-- `checkpoints/encoder/train_only/`: Encoders trained on train set (for validation)
-- `checkpoints/encoder/train_and_valid/`: Encoders trained on train+valid (for test)
-- `checkpoints/model/`: Full model checkpoints (encoder + classifier)
-- `checkpoints/parameters/`: Best hyperparameters in JSON format
-
-## Key Design Decisions
-
-1. **Two-Stage Training**: First optimize hyperparameters on train/valid split, then retrain on full train+valid with best hyperparameters for final test evaluation.
-
-2. **Frozen Encoders**: For multimodal models, pre-trained single-modal encoders are frozen to prevent overfitting and reduce training time.
-
-3. **Self-Attention Fusion**: Multi-head attention allows the model to learn adaptive weights for each modality based on the input.
 
 ## References
 
