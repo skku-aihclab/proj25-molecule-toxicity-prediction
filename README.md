@@ -15,7 +15,6 @@ A comprehensive deep learning model for molecular toxicity prediction using a mu
 - [Data Preprocessing](#data-preprocessing)
 - [Usage](#usage)
 - [Results](#results)
-- [References](#references)
 
 ## Overview
 
@@ -279,19 +278,6 @@ Each testing script:
 3. Loads trained model checkpoint
 4. Evaluates on test set
 5. Reports per-task AUC and mean AUC
-
-## References
-
-### Pre-trained Models
-
--  **MoLFormer-XL**: Ross, J., et al. (2022). "Large-Scale Chemical Language Representations Capture Molecular Structure and Properties." *Nature Machine Intelligence*.
-
--  **ImageMol**: Zhu, J., et al. (2022). "Accurate Prediction of Molecular Properties and Drug Targets Using a Self-Supervised Image Representation Learning Framework." *Nature Machine Intelligence*.
-
--  **CReSS**: Kwon, Y., et al. (2021). "Cross-Modal Retrieval between ¹³C NMR Spectra and Structures for Compound Identification Using Deep Contrastive Learning." *Journal of Chemical Information and Modeling*.
-
-### Dataset
-- **Moleculenet**: Wu, Z., et al. (2018). "MoleculeNet: A Benchmark for Molecular Machine Learning." *Chemical Science*.
 
 ## Citation
 
