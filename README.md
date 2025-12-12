@@ -13,7 +13,7 @@ A comprehensive deep learning model for molecular toxicity prediction using a mu
 - [Installation](#installation)
 - [Data Download](#data-download)
 - [Data Preprocessing](#data-preprocessing)
-- [Usage](#usage)
+- [Running Experiments](#running-experiments)
 - [Results](#results)
 
 ## Overview
@@ -219,7 +219,7 @@ If you wish to reproduce the preprocessing pipeline or need access to the raw sp
 
 The pre-processed data (CSV files, images, and binary spectra) are already available and can be used directly without running the preprocessing pipeline.
 
-## Usage
+## Running Experiments
 
 ### Running All Experiments
 
