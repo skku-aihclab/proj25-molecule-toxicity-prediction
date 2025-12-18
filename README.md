@@ -1,5 +1,7 @@
 # MoltiTox: a multimodal fusion model for molecular toxicity prediction
 
+[View Paper](https://doi.org/10.3389/ftox.2025.1720651)
+
 A comprehensive deep learning model for molecular toxicity prediction using a multimodal approach. The model combines molecular graphs, SMILES sequences, 2D structure images, and NMR spectra to predict toxicity across 12 different endpoints from the Tox21 dataset.
 
 ## Table of Contents
@@ -279,8 +281,6 @@ Each testing script:
 
 Junwoo Park and Sujee Lee, "MoltiTox: A Multimodal Fusion Model for Molecular Toxicity Prediction"  
 DOI: 10.3389/ftox.2025.1720651
-
-[View Paper](https://doi.org/10.3389/ftox.2025.1720651)
 
 Full citation will be available soon.
 
