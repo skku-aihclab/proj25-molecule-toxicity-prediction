@@ -16,14 +16,9 @@ if ROOT not in sys.path:
 from models.models import GraphEncoder, SMILESEncoder, ImageEncoder, SpectrumEncoder, MoltiTox
 from utils.dataset import GraphDataset, SMILESDataset, ImageDataset, SpectrumDataset, MoltiToxDataset
 from utils.attention_analysis import (
-    compute_modality_contributions,
-    compute_sample_wise_contributions,
-    save_attention_analysis,
-    print_attention_summary,
     compute_cross_modal_attention_matrix,
     plot_cross_modal_attention_heatmap,
-    print_cross_modal_attention_matrix,
-    save_cross_modal_attention_analysis
+    print_cross_modal_attention_matrix
 )
 
 # Add the root for CReSS models to sys.path
@@ -59,17 +54,11 @@ s_test = SMILESDataset(
     max_length=202
 )
 i_test = ImageDataset(test_csv, labels, img_dir, transform=test_transform)
-# MODIFIED: Enable allow_missing=True to handle samples without spectrum data
 sp_test = SpectrumDataset(test_csv, labels, spectra_dir, allow_missing=True)
-
-print(f"Total test samples: {len(g_test)}")
-print(f"Samples with spectrum data: {len([mid for mid in sp_test.df['mol_id'].astype(str) if mid in sp_test.available_ids])}")
-print(f"Samples without spectrum data: {len([mid for mid in sp_test.df['mol_id'].astype(str) if mid not in sp_test.available_ids])}")
 
 def collate(batch):
     """
     Custom collate function to handle batching of graph, smiles, image, and spectrum data.
-    Now handles None values for missing spectrum data.
     Args:
         batch: List of tuples (graph, transformer IDs, transformer mask, image, spectra, labels).
     Returns:
@@ -133,22 +122,12 @@ spectrum_encoder = SpectrumEncoder(
     hidden_dim=spectrum_best_params["hidden_dim"],
     emb_dim=spectrum_best_params["emb_dim"],
 )
-# MODIFIED: Load checkpoint with strict=False to allow for new missing_token parameter
+
 spectrum_encoder.load_state_dict(
     torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "spectrum_encoder.pth"),
                map_location=torch.device('cpu')),
     strict=False
 )
-
-# Freeze parameters of the backbone models (but allow missing_token to be trainable if needed)
-for net in (graph_encoder, image_encoder, smiles_encoder):
-    for p in net.parameters():
-        p.requires_grad = False
-
-# Freeze spectrum encoder except missing_token
-for name, p in spectrum_encoder.named_parameters():
-    if 'missing_token' not in name:
-        p.requires_grad = False
 
 # ─── 4) hyperparameters ──────────────────────────────────────
 with open(os.path.join(ROOT, "checkpoints", "parameters", "moltitox_best_params.json")) as f:
@@ -178,7 +157,6 @@ model.load_state_dict(
 )
 
 # ─── 6) Test model ─────────────────────────────────────
-print("\nStarting evaluation on full test set with missing spectrum handling...")
 start_test_time = time.time()  # Record the start time for test performance
 model.eval()
 
@@ -222,27 +200,11 @@ print("-" * 50)
 print(f"Mean AUC        : {np.nanmean(list(aucs.values())):.4f}")
 print("="*50)
 
-# ─── 7) Attention weight analysis ─────────────────────────────────────
+# ─── 7) Cross-modal attention matrix analysis ─────────────────────────────────────
 modality_names = ['Graph', 'SMILES', 'Image', 'Spectrum']
-
-# Compute overall modality contributions
 all_attn_stacked = torch.cat(all_attn, dim=0)
-overall_contributions = compute_modality_contributions(all_attn_stacked, modality_names)
 
-# Compute sample-wise statistics
-mean_contributions, std_contributions = compute_sample_wise_contributions(all_attn, modality_names)
-contribution_stats = {
-    name: {'mean': float(mean_contributions[i]), 'std': float(std_contributions[i])}
-    for i, name in enumerate(modality_names)
-}
 
-# Print summary
-print_attention_summary(overall_contributions, contribution_stats, modality_names)
-
-# Save results
-attention_save_dir = os.path.join(ROOT, "checkpoints", "attention_analysis")
-
-# ─── 8) Cross-modal attention matrix analysis ─────────────────────────────────────
 # Compute cross-modal attention matrix
 mean_matrix, std_matrix = compute_cross_modal_attention_matrix(
     all_attn_stacked,
@@ -252,24 +214,11 @@ mean_matrix, std_matrix = compute_cross_modal_attention_matrix(
 # Print cross-modal attention matrix to console
 print_cross_modal_attention_matrix(mean_matrix, std_matrix, modality_names)
 
-# Create and save heatmap (saves to attention_save_dir/image/)
+# Create heatmap visualization
 plot_cross_modal_attention_heatmap(
     mean_matrix=mean_matrix,
     std_matrix=std_matrix,
     modality_names=modality_names,
-    save_dir=attention_save_dir,
-    model_name="moltitox",
     title='MoltiTox Cross-Modal Attention (Full Test with Missing Data)',
     figsize=(10, 8)
 )
-
-# Save cross-modal attention analysis to JSON (saves to attention_save_dir/json/)
-save_cross_modal_attention_analysis(
-    mean_matrix=mean_matrix,
-    std_matrix=std_matrix,
-    modality_names=modality_names,
-    save_dir=attention_save_dir,
-    model_name="moltitox_full_missing"
-)
-
-print("\nEvaluation complete! Results saved to:", attention_save_dir)

@@ -13,16 +13,6 @@ if ROOT not in sys.path:
 
 from models.models import SpectrumEncoder, ImageEncoder, MultiModalSpecImg
 from utils.dataset import SpectrumDataset, ImageDataset, SpectrumImageDataset
-from utils.attention_analysis import (
-    compute_modality_contributions,
-    compute_sample_wise_contributions,
-    save_attention_analysis,
-    print_attention_summary,
-    compute_cross_modal_attention_matrix,
-    plot_cross_modal_attention_heatmap,
-    print_cross_modal_attention_matrix,
-    save_cross_modal_attention_analysis
-)
 
 # Add the root for CReSS models to sys.path
 CRESS_ROOT = os.path.join(ROOT, "experiments", "spectrum")
@@ -72,7 +62,7 @@ test_loader = DataLoader(
     collate_fn=collate
 )
 
-# ─── 3) encoder load & freeze ──────────────────────────────────────
+# ─── 3) encoder load ──────────────────────────────────────
 # load CReSS model for 1D CNN
 config_path     = os.path.join(ROOT, "experiments", "spectrum", "8.json")
 pretrain_path   = os.path.join(ROOT, "experiments", "spectrum", "8.pth")
@@ -97,11 +87,6 @@ image_encoder = ImageEncoder(
     hidden_size=image_best_params["hidden_size"],
     emb_dim=image_best_params["emb_dim"]
 ); image_encoder.load_state_dict(torch.load(os.path.join(ROOT, "checkpoints", "encoder", "train_and_valid", "image_encoder.pth"), map_location=torch.device('cpu')))
-
-# Freeze parameters of the encoders
-for net in (spectrum_encoder, image_encoder):
-    for p in net.parameters():
-        p.requires_grad = False
 
 # ─── 4) hyperparameters ──────────────────────────────────────
 with open(os.path.join(ROOT, "checkpoints", "parameters", "spec_img_best_params.json")) as f:
@@ -130,14 +115,13 @@ model.load_state_dict(torch.load(
 start_test_time = time.time()  # Record the start time for test performance
 model.eval()
 
-all_y, all_p, all_attn = [], [], []
+all_y, all_p = [], []
 with torch.no_grad():
     for ppm_list, img, y in test_loader:
         img = img.to(device)
-        logits, attn_weights = model(ppm_list, img, return_attention=True)
+        logits = model(ppm_list, img)
         probs = torch.sigmoid(logits)
         all_p.append(probs.cpu())
-        all_attn.append(attn_weights.cpu())
         all_y.append(y)
 
 y_true = torch.cat(all_y).numpy()
@@ -160,53 +144,3 @@ for lab, auc in aucs.items():
     print(f"{lab:15s}: {auc:.4f}")
 print("-" * 30)
 print(f"Mean AUC        : {np.nanmean(list(aucs.values())):.4f}")
-
-# ─── 7) Attention weight analysis ─────────────────────────────────────
-modality_names = ['Spectrum', 'Image']
-
-# Compute overall modality contributions
-all_attn_stacked = torch.cat(all_attn, dim=0)
-overall_contributions = compute_modality_contributions(all_attn_stacked, modality_names)
-
-# Compute sample-wise statistics
-mean_contributions, std_contributions = compute_sample_wise_contributions(all_attn, modality_names)
-contribution_stats = {
-    name: {'mean': float(mean_contributions[i]), 'std': float(std_contributions[i])}
-    for i, name in enumerate(modality_names)
-}
-
-# Print summary
-print_attention_summary(overall_contributions, contribution_stats, modality_names)
-
-# Save results
-attention_save_dir = os.path.join(ROOT, "checkpoints", "attention_analysis")
-
-# ─── 8) Cross-modal attention matrix analysis ─────────────────────────────────────
-# Compute cross-modal attention matrix
-mean_matrix, std_matrix = compute_cross_modal_attention_matrix(
-    all_attn_stacked,
-    modality_names
-)
-
-# Print cross-modal attention matrix to console
-print_cross_modal_attention_matrix(mean_matrix, std_matrix, modality_names)
-
-# Create and save heatmap (saves to attention_save_dir/image/)
-plot_cross_modal_attention_heatmap(
-    mean_matrix=mean_matrix,
-    std_matrix=std_matrix,
-    modality_names=modality_names,
-    save_dir=attention_save_dir,
-    model_name="spec_img",
-    title='Spectrum-Image Cross-Modal Attention',
-    figsize=(10, 8)
-)
-
-# Save cross-modal attention analysis to JSON (saves to attention_save_dir/json/)
-save_cross_modal_attention_analysis(
-    mean_matrix=mean_matrix,
-    std_matrix=std_matrix,
-    modality_names=modality_names,
-    save_dir=attention_save_dir,
-    model_name="spec_img"
-)
