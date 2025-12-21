@@ -42,43 +42,32 @@ The multimodal models use self-attention fusion mechanisms to effectively combin
 ```
 [root]/
 ├── models/
-│   ├── models.py              # All encoder and classifier models
-│   └── __init__.py
+│   └── models.py              # All encoder and classifier models
 ├── utils/
-│   ├── dataset.py             # Dataset classes for all modalities
-│   └── __init__.py
+│   └── dataset.py             # Dataset classes for all modalities
 ├── experiments/
-│   ├── graph/                 # Graph-based experiments
-│   │   ├── train.py
-│   │   └── test.py
-│   ├── smiles/                # SMILES-based experiments
-│   │   ├── train.py
-│   │   └── test.py
-│   ├── image/                 # Image-based experiments
-│   │   ├── train.py
-│   │   └── test.py
-│   ├── spectrum/              # Spectrum-based experiments
-│   │   ├── train.py
-│   │   ├── test.py
-│   │   └── CReSS/             # CReSS model for NMR encoding
+│   ├── graph/                 # Graph Encoder
+│   ├── smiles/                # SMILES Encoder
+│   ├── image/                 # Image Encoder
+│   ├── spectrum/              # Spectrum Encoder
 │   └── multimodal/            # Multimodal fusion experiments
 │       ├── gph_smi/           # Graph + SMILES
 │       ├── gph_img/           # Graph + Image
 │       ├── gph_spec/          # Graph + Spectrum
 │       ├── smi_img/           # SMILES + Image
 │       ├── smi_spec/          # SMILES + Spectrum
-│       ├── spec_img/          # Spectrum + Image
+│       ├── spec_img/          # Image + Spectrum
 │       ├── gph_smi_img/       # Graph + SMILES + Image
-│       └── moltitox/          # Graph + SMILES + Image + Spectrum (Full)
+│       └── moltitox/          # Graph + SMILES + Image + Spectrum
 ├── data/
 │   ├── train.csv              # Training data
 │   ├── valid.csv              # Validation data
 │   ├── test.csv               # Test data
-│   ├── train_spectra.csv      # Training data with spectra
-│   ├── valid_spectra.csv      # Validation data with spectra
-│   ├── test_spectra.csv       # Test data with spectra
+│   ├── train_spectra.csv      # Training data with spectra only
+│   ├── valid_spectra.csv      # Validation data with spectra only
+│   ├── test_spectra.csv       # Test data with spectra only
 │   ├── images/                # Molecular 2D images
-│   └── spectra/               # NMR spectral data (.npy files)
+│   └── spectra/               # NMR spectral data
 ├── checkpoints/
 │   ├── encoder/               # Saved encoder weights
 │   │   ├── train_only/        # Encoders trained on train set only
