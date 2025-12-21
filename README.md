@@ -40,7 +40,7 @@ The multimodal models use self-attention fusion mechanisms to effectively combin
 ## Project Structure
 
 ```
-my_model/
+[root]/
 ├── models/
 │   ├── models.py              # All encoder and classifier models
 │   └── __init__.py
@@ -77,7 +77,7 @@ my_model/
 │   ├── train_spectra.csv      # Training data with spectra
 │   ├── valid_spectra.csv      # Validation data with spectra
 │   ├── test_spectra.csv       # Test data with spectra
-│   ├── images/                # Molecular 2D structure images
+│   ├── images/                # Molecular 2D images
 │   └── spectra/               # NMR spectral data (.npy files)
 ├── checkpoints/
 │   ├── encoder/               # Saved encoder weights
@@ -88,7 +88,7 @@ my_model/
 │   └── pretrained_models/     # Pre-trained model checkpoints
 ├── main.py                    # Run all experiments sequentially
 ├── requirements.txt           # Python dependencies
-└── README.md                  # This file
+└── README.md                  
 ```
 
 
