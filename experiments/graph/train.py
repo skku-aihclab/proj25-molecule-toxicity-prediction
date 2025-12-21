@@ -41,7 +41,7 @@ start_search_time = time.time() # Record the start time for hyperparameter searc
 def objective(trial):
     # Hyperparameters to tune
     hidden_dim = trial.suggest_categorical("hidden_dim", [256, 512, 756])
-    num_layers = trial.suggest_int("num_layers", 3, 4, 5)
+    num_layers = trial.suggest_int("num_layers", 3, 5)
     emb_dim    = trial.suggest_categorical("emb_dim", [256, 512])
     lr         = trial.suggest_categorical("lr", [1e-4, 3e-4, 1e-3])
     wd         = trial.suggest_categorical("weight_decay", [1e-5, 1e-4, 1e-3])

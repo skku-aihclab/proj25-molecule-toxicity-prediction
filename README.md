@@ -44,7 +44,8 @@ The multimodal models use self-attention fusion mechanisms to effectively combin
 ├── models/
 │   └── models.py              # All encoder and classifier models
 ├── utils/
-│   └── dataset.py             # Dataset classes for all modalities
+│   ├── dataset.py             # Dataset classes for all modalities
+│   └── attention_analysis.py  # Attention analysis utilities
 ├── experiments/
 │   ├── graph/                 # Graph Encoder
 │   ├── smiles/                # SMILES Encoder
@@ -94,6 +95,8 @@ The multimodal models use self-attention fusion mechanisms to effectively combin
 - pandas
 - numpy
 - PIL
+- matplotlib
+- seaborn
 
 ### Setup
 

@@ -251,7 +251,6 @@ class SpectrumEncoder(nn.Module):
     SpectrumEncoder using pre-trained CReSS NMR encoder to process spectral data
     This module takes a list of ppm values as input and outputs embeddings of a specified dimension.
     It includes a 2-layer MLP head for further processing.
-    Now supports handling missing spectrum data with a learned missing token embedding.
     Reference: "Cross-Modal Retrieval between 13C NMR Spectra and Structures for Compound Identification Using Deep Contrastive Learning"
     Args:
         model_inference: CReSS NMR encoder instance

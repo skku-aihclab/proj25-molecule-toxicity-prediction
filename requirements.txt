@@ -20,9 +20,11 @@ pandas>=2.0.0
 # Image Processing
 Pillow>=10.0.0
 
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
 # Additional utilities (if needed for specific implementations)
-# matplotlib>=3.7.0  # For visualization (uncomment if needed)
-# seaborn>=0.12.0    # For visualization (uncomment if needed)
 # jupyter>=1.0.0     # For notebook experiments (uncomment if needed)
 
 # Note: Install PyTorch Geometric dependencies based on your CUDA version
