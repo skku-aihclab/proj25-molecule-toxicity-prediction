@@ -271,10 +271,18 @@ Each testing script:
 
 ## Citation
 
-Junwoo Park and Sujee Lee, "MoltiTox: A Multimodal Fusion Model for Molecular Toxicity Prediction"  
-DOI: 10.3389/ftox.2025.1720651
+If you use this model in your research, please cite:
 
-Full citation will be available soon.
+```
+@article{Park2025MoltiTox,
+  author  = {Park, Junwoo and Lee, Sujee},
+  title   = {MoltiTox: a multimodal fusion model for molecular toxicity prediction},
+  journal = {Frontiers in Toxicology},
+  year    = {2025},
+  volume  = {7},
+  doi     = {10.3389/ftox.2025.1720651}
+}
+```
 
 ## License
 
