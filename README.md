@@ -274,13 +274,13 @@ Each testing script:
 If you use this model in your research, please cite:
 
 ```
-@article{Park2025MoltiTox,
-  author  = {Park, Junwoo and Lee, Sujee},
-  title   = {MoltiTox: a multimodal fusion model for molecular toxicity prediction},
-  journal = {Frontiers in Toxicology},
-  year    = {2025},
-  volume  = {7},
-  doi     = {10.3389/ftox.2025.1720651}
+@article{park7moltitox,
+  title={MoltiTox: a multimodal fusion model for molecular toxicity prediction},
+  author={Park, Junwoo and Lee, Sujee},
+  journal={Frontiers in Toxicology},
+  volume={7},
+  pages={1720651},
+  publisher={Frontiers}
 }
 ```
 
