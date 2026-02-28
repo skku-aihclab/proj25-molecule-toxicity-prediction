@@ -191,13 +191,11 @@ MoltiTox/
 ### Data File Descriptions
 
 - **Standard CSV files** (`train.csv`, `valid.csv`, `test.csv`):
-  - Contains all molecules with graph, SMILES, and image modalities
   - Used for single-modal (graph, SMILES, image) and multimodal experiments without spectra
 
 - **Spectra CSV files** (`train_spectra.csv`, `valid_spectra.csv`, `test_spectra.csv`):
   - Contains only molecules with available NMR spectra
   - Subset of the standard datasets
-  - Used for spectrum-based and spectrum-inclusive multimodal experiments
 
 ## Data Preprocessing
 
@@ -218,13 +216,6 @@ To run all experiments sequentially (single-modal + multimodal):
 ```bash
 python -u main.py 2>&1 | tee result.txt
 ```
-
-This will:
-1. Train and test all 4 single-modal models
-2. Train and test all 8 multimodal models
-3. Save all results to `result.txt`
-4. Save model checkpoints to `checkpoints/`
-5. Save best hyperparameters to `checkpoints/parameters/`
 
 ### Running Individual Experiments
 
@@ -249,25 +240,6 @@ cd ../smi_img
 python train.py  # Train SMILES+Image fusion model
 python test.py   # Test SMILES+Image fusion model
 ```
-
-### Training Pipeline
-
-Each training script follows this pipeline:
-
-1. **Load Data**
-2. **Load Encoders**
-3. **Hyperparameter Search**
-4. **Save Best Parameters**
-5. **Retrain on Full Data**
-
-### Testing Pipeline
-
-Each testing script:
-1. Loads test data
-2. Loads best hyperparameters
-3. Loads trained model checkpoint
-4. Evaluates on test set
-5. Reports per-task AUC and mean AUC
 
 ## Citation
 
